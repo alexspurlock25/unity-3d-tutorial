@@ -7,10 +7,31 @@ public class Player : MonoBehaviour {
     [SerializeField] private GameInput gameInput;
     [SerializeField] private float movementSpeed = 7f;
     private bool isWalking = false;
+    private Vector3 lastInteractionMoveDirection;
 
     private void Update() {
-        Vector2 inputVector = gameInput.GetMovementVectorNormalized();
+        HandleMovement();
+        HanleInteractions();
+    }
 
+    private void HanleInteractions() {
+        Vector2 inputVector = gameInput.GetMovementVectorNormalized();
+        Vector3 moveDir = new Vector3(inputVector.x, 0f, inputVector.y);
+
+        if (moveDir != Vector3.zero) {
+            lastInteractionMoveDirection = moveDir;
+        }
+
+        float interactDistance = 2f;
+        if (Physics.Raycast(transform.position, lastInteractionMoveDirection, out RaycastHit raycastHit, interactDistance)) {
+            if (raycastHit.transform.TryGetComponent(out ClearCounter clearCounter)) {
+                clearCounter.Interact();
+            }
+
+        }
+    }
+    private void HandleMovement() {
+        Vector2 inputVector = gameInput.GetMovementVectorNormalized();
         Vector3 moveDir = new Vector3(inputVector.x, 0f, inputVector.y);
 
         bool canMove = !Physics.CapsuleCast(
@@ -60,7 +81,6 @@ public class Player : MonoBehaviour {
         float rotationSpeed = 10f;
         transform.forward = Vector3.Slerp(transform.forward, moveDir, Time.deltaTime * rotationSpeed);
     }
-
     public bool IsWalking() {
         return isWalking;
     }
